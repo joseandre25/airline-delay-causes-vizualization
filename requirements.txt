@@ -1,0 +1,18 @@
+# Bibliotecas para análise de dados
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Regressão linear (preferência: statsmodels, fallback: sklearn)
+statsmodels>=0.14.0
+scikit-learn>=1.3.0
+
+# Jupyter e kernel
+jupyter>=1.0.0
+notebook>=6.5.0
+ipykernel>=6.25.0
+
+# Utilitários
+pathlib2>=2.3.7; python_version < '3.4'
+
