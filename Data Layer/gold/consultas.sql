@@ -3,8 +3,8 @@ WITH metricas_anuais AS (
     SELECT
         t.num_ano,
         c.nom_cia,
-        SUM(f.qtd_voo_arr) AS total_voos,
-        SUM(f.qtd_voo_can + f.qtd_atr_del) AS voos_problematicos
+        SUM(f.qtd_voo_cgd) AS total_voos,
+        SUM(f.qtd_voo_can + f.qtd_atr_ats) AS voos_problematicos
     FROM dw.fat_atr f
     JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
     JOIN dw.dim_cia c ON f.srk_cia = c.srk_cia
@@ -55,7 +55,7 @@ WITH voos_mensais AS (
         t.num_ano,
         t.num_mes,
         t.nom_mes,
-        SUM(f.qtd_voo_arr) AS voos_atuais
+        SUM(f.qtd_voo_cgd) AS voos_atuais
     FROM dw.fat_atr f
     JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
     GROUP BY t.num_ano, t.num_mes, t.nom_mes
@@ -77,11 +77,11 @@ ORDER BY num_ano DESC, num_mes DESC;
 SELECT 
     t.num_ano,
     t.nom_mes,
-    SUM(f.qtd_voo_arr + f.qtd_voo_can + f.qtd_voo_div) AS voos_programados,
-    SUM(f.qtd_voo_arr) AS voos_realizados,
+    SUM(f.qtd_voo_cgd + f.qtd_voo_can + f.qtd_voo_div) AS voos_programados,
+    SUM(f.qtd_voo_cgd) AS voos_realizados,
     SUM(f.qtd_voo_can) AS qtd_cancelados,
     SUM(f.qtd_voo_div) AS qtd_desviados,
-    SUM(f.qtd_atr_del) AS qtd_atrasados
+    SUM(f.qtd_atr_ats) AS qtd_atrasados
 FROM dw.fat_atr f
 JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
 GROUP BY t.num_ano, t.num_mes, t.nom_mes
@@ -106,9 +106,9 @@ SELECT
     t.nom_mes,
     t.num_mes,
     c.nom_cia,
-    SUM(f.qtd_atr_del) AS total_atrasos,
-    SUM(f.qtd_voo_arr) AS total_voos,
-    ROUND((SUM(f.qtd_atr_del)::NUMERIC / NULLIF(SUM(f.qtd_voo_arr),0)) * 100, 2) AS taxa_atraso
+    SUM(f.qtd_atr_ats) AS total_atrasos,
+    SUM(f.qtd_voo_cgd) AS total_voos,
+    ROUND((SUM(f.qtd_atr_ats)::NUMERIC / NULLIF(SUM(f.qtd_voo_cgd),0)) * 100, 2) AS taxa_atraso
 FROM dw.fat_atr f
 JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
 JOIN dw.dim_cia c ON f.srk_cia = c.srk_cia
@@ -118,12 +118,12 @@ ORDER BY t.num_mes;
 -- 7. Scatter Plot: Severidade (Média) vs Frequência (Total)
 SELECT 
     a.nom_apt,
-    SUM(f.qtd_atr_del) AS frequencia_atrasos,
+    SUM(f.qtd_atr_ats) AS frequencia_atrasos,
     ROUND(AVG(NULLIF(f.val_atr_mnt, 0)), 1) AS media_minutos_por_atraso
 FROM dw.fat_atr f
 JOIN dw.dim_apt a ON f.srk_apt = a.srk_apt
 GROUP BY a.nom_apt
-HAVING SUM(f.qtd_atr_del) > 50 
+HAVING SUM(f.qtd_atr_ats) > 50 
 ORDER BY frequencia_atrasos DESC;
 
 -- 8. Evolução Temporal de Cancelamentos e Desvios
@@ -142,7 +142,7 @@ ORDER BY t.num_ano, t.num_mes;
 SELECT 
     t.num_ano,
     c.nom_cia,
-    SUM(f.qtd_voo_arr) AS voos_realizados
+    SUM(f.qtd_voo_cgd) AS voos_realizados
 FROM dw.fat_atr f
 JOIN dw.dim_cia c ON f.srk_cia = c.srk_cia
 JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
