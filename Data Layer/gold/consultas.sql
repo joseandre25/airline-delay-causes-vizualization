@@ -1,3 +1,5 @@
+-- Q1 - graf_top3_eficiencia_ano
+-- graf_top3_eficiencia_ano
 -- 1. Ranking Top 3 Eficiência por Ano CTE
 WITH metricas_anuais AS (
     SELECT
@@ -24,6 +26,8 @@ SELECT * FROM ranking_calculado
 WHERE ranking <= 3
 ORDER BY num_ano DESC, ranking ASC;
 
+-- Q2 - graf_pareto_atraso_aeroporto
+-- graf_pareto_atraso_aeroporto
 -- 2. Pareto 80/20 Atrasos por Aeroporto (Soma Acumulada)
 WITH total_atraso_apt AS (
     SELECT
@@ -49,6 +53,8 @@ SELECT
 FROM calculo_acumulado
 ORDER BY total_minutos_atraso DESC;
 
+-- Q3 - graf_crescimento_mom_voos
+-- graf_crescimento_mom_voos
 -- 3. Crescimento Mês a Mês (MoM) de Voos, trazendo a taxa do voo anterior
 WITH voos_mensais AS (
     SELECT
@@ -73,9 +79,12 @@ SELECT
 FROM voos_mensais
 ORDER BY num_ano DESC, num_mes DESC;
 
+-- Q4 - graf_funil_operacional_mes
+-- graf_funil_operacional_mes
 -- 4. Big Numbers: Funil Operacional (Programados vs Realizados vs Perdas)
 SELECT 
     t.num_ano,
+    t.num_mes,
     t.nom_mes,
     SUM(f.qtd_voo_cgd + f.qtd_voo_can + f.qtd_voo_div) AS voos_programados,
     SUM(f.qtd_voo_cgd) AS voos_realizados,
@@ -87,6 +96,8 @@ JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
 GROUP BY t.num_ano, t.num_mes, t.nom_mes
 ORDER BY t.num_ano, t.num_mes;
 
+-- Q5 - graf_causas_atraso_minutos_cia_ano
+-- graf_causas_atraso_minutos_cia_ano
 -- 5. Breakdown de Causas de Atraso em Minutos
 SELECT 
     t.num_ano,
@@ -101,6 +112,8 @@ JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
 JOIN dw.dim_cia c ON f.srk_cia = c.srk_cia
 GROUP BY t.num_ano, c.nom_cia;
 
+-- Q6 - graf_heatmap_taxa_atraso_mes_cia
+-- graf_heatmap_taxa_atraso_mes_cia
 -- 6. Matriz de Calor (Heatmap): Sazonalidade de Atrasos
 SELECT 
     t.nom_mes,
@@ -115,17 +128,23 @@ JOIN dw.dim_cia c ON f.srk_cia = c.srk_cia
 GROUP BY t.nom_mes, t.num_mes, c.nom_cia
 ORDER BY t.num_mes;
 
--- 7. Scatter Plot: Severidade (Média) vs Frequência (Total)
+-- Q7 - graf_scatter_freq_vs_severidade_aeroporto
+-- graf_scatter_freq_vs_severidade_aeroporto (corrigida)
 SELECT 
     a.nom_apt,
     SUM(f.qtd_atr_ats) AS frequencia_atrasos,
-    ROUND(AVG(NULLIF(f.val_atr_mnt, 0)), 1) AS media_minutos_por_atraso
+    ROUND(
+        (SUM(f.val_atr_mnt)::numeric / NULLIF(SUM(f.qtd_atr_ats), 0)),
+        1
+    ) AS media_minutos_por_atraso
 FROM dw.fat_atr f
 JOIN dw.dim_apt a ON f.srk_apt = a.srk_apt
 GROUP BY a.nom_apt
-HAVING SUM(f.qtd_atr_ats) > 50 
+HAVING SUM(f.qtd_atr_ats) > 50
 ORDER BY frequencia_atrasos DESC;
 
+-- Q8 - graf_tendencia_cancelamentos_desvios
+-- graf_tendencia_cancelamentos_desvios
 -- 8. Evolução Temporal de Cancelamentos e Desvios
 SELECT 
     t.num_ano,
@@ -138,6 +157,8 @@ JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
 GROUP BY t.num_ano, t.num_mes, t.dat_tmp
 ORDER BY t.num_ano, t.num_mes;
 
+-- Q9 - graf_marketshare_voos_cia_ano
+-- graf_marketshare_voos_cia_ano
 -- 9. Market Share (Volume de Voos por Cia)
 SELECT 
     t.num_ano,
@@ -149,6 +170,8 @@ JOIN dw.dim_tmp t ON f.srk_tmp = t.srk_tmp
 GROUP BY t.num_ano, c.nom_cia
 ORDER BY t.num_ano, voos_realizados DESC;
 
+-- Q10 - graf_efeito_domino_late_aircraft_aeroporto
+-- graf_efeito_domino_late_aircraft_aeroporto
 -- 10. Efeito Dominó: Atrasos causados por aeronave anterior
 SELECT 
     a.nom_apt,
